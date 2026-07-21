@@ -58,7 +58,7 @@ class AIConfig:
     """AI analyzer configuration."""
 
     # Local LlamaCpp
-    local_url: str = "http://localhost:8081"
+    local_url: str = "http://localhost:8080"
     local_model: str = "default"
     local_timeout: int = 120
 

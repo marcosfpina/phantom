@@ -145,6 +145,9 @@
           gron
           htmlq
 
+          nodejs
+          bun
+
           # File Analysis
           file
           exiftool

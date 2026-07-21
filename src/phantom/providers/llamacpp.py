@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class LlamaCppProvider(AIProvider):
     """Local LlamaCPP server provider."""
 
-    DEFAULT_URL = "http://localhost:8081"
+    DEFAULT_URL = "http://localhost:8080"
 
     def __init__(
         self,

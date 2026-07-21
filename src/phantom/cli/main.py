@@ -184,6 +184,9 @@ def classify(
 @app.command()
 def scan(
     directory: Path = typer.Argument(".", help="Directory to scan"),
+    strict: bool = typer.Option(
+        False, "--strict", help="Exit with code 1 when findings are detected (CI gate mode)"
+    ),
 ):
     """Scan for sensitive data patterns."""
     from phantom.pipeline.phantom_dag import ClassificationEngine
@@ -221,6 +224,8 @@ def scan(
     if total_findings > 0:
         console.print(table)
         console.print(f"\n[red]Found {total_findings} sensitive pattern(s)[/]")
+        if strict:
+            raise typer.Exit(1)
     else:
         console.print("[green]No sensitive patterns detected[/]")
 

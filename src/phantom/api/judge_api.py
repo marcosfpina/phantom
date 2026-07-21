@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 
 from pydantic import BaseModel, Field
+from phantom.providers import get_storage_provider, LocalImmutableBucketProvider
 
 logger = logging.getLogger("judge_api")
 
@@ -91,20 +92,28 @@ class PhantomGateResponse(BaseModel):
 # STORAGE
 # ═══════════════════════════════════════════════════════════════
 
-BUNDLE_DIR = Path("/tmp/phantom-bundles")
-BUNDLE_DIR.mkdir(parents=True, exist_ok=True)
+DEFAULT_BUNDLE_STORAGE = Path.home() / ".phantom" / "buckets" / "phantom-bundles"
+storage_provider = get_storage_provider(base_dir=DEFAULT_BUNDLE_STORAGE)
 
 
-def save_bundle(bundle: PhantomGateBundle) -> str:
-    """Salvar bundle localmente"""
-    filename = f"bundle-{bundle.timestamp}.json"
-    filepath = BUNDLE_DIR / filename
+def save_bundle(bundle: PhantomGateBundle) -> tuple[str, str]:
+    """Salvar bundle no storage provider imutável e retornar (file_identifier, directory_or_bucket)"""
+    key = f"bundle-{bundle.timestamp}.json"
+    content_str = json.dumps(bundle.dict(), indent=2)
 
-    with open(filepath, "w") as f:
-        json.dump(bundle.dict(), f, indent=2)
+    try:
+        saved_key = storage_provider.put(content_str, key=key)
+    except FileExistsError:
+        saved_key = key
 
-    logger.info(f"Bundle saved: {filepath}")
-    return str(filepath)
+    if isinstance(storage_provider, LocalImmutableBucketProvider):
+        filepath = storage_provider._safe_path(saved_key)
+        return str(filepath), str(storage_provider.base_dir)
+    elif hasattr(storage_provider, "bucket_name"):
+        prefix = "gs" if "GCS" in storage_provider.__class__.__name__ else "s3"
+        return saved_key, f"{prefix}://{storage_provider.bucket_name}"
+    else:
+        return saved_key, "immutable-storage"
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -328,7 +337,7 @@ class JudgmentEngine:
                 logger.error(f"ORACLE/SENTINEL processing failed: {e}")
 
         # 4. Salvar bundle
-        bundle_file = save_bundle(bundle)
+        bundle_file, bundle_dir = save_bundle(bundle)
 
         return PhantomGateResponse(
             severity=severity,
@@ -336,7 +345,7 @@ class JudgmentEngine:
             relevant_adrs=list(set(relevant_adrs))[:5],  # Top 5
             recommendations=recommendations,
             bundle_file=bundle_file,
-            bundle_dir=str(BUNDLE_DIR),
+            bundle_dir=bundle_dir,
             notes=notes,
         )
 
