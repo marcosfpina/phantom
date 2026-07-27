@@ -59,7 +59,7 @@ dependencies = [
 
     # Observability
     "structlog>=23.0,<25.0",
-    "prometheus-client>=0.19,<1.0",
+    "prometheus-client>=0.26.0,<1.0",
 
     # Utilities
     "python-magic>=0.4,<1.0",
