@@ -169,18 +169,24 @@ cortex:
     @echo "🧠 Starting Cortex API on port 8087..."
     phantom-api
 
-# Start desktop app
+# Start GTK4 Writer Sandbox desktop app
 desktop:
-    @echo "🖥️  Starting Cortex Desktop..."
-    @cd cortex-desktop && npm run tauri dev
+    @echo "🖥️  Starting Phantom Writer Desktop..."
+    phantom-desktop
 
 ui:
-    @echo "🖥️  Starting Cortex Desktop..."
-    @cd cortex-desktop && npm run tauri dev
+    @echo "🖥️  Starting Phantom Writer Desktop..."
+    phantom-desktop
 
-ui-build:
-    @echo "🏗️  Building Cortex Desktop (static)..."
+# Build legacy Tauri/Svelte desktop static assets
+ui-build-legacy:
+    @echo "🏗️  Building legacy Cortex Desktop (static)..."
     @cd cortex-desktop && npm run build
+
+# Start legacy Tauri/Svelte desktop app
+desktop-legacy:
+    @echo "🖥️  Starting legacy Cortex Desktop..."
+    @cd cortex-desktop && npm run tauri dev
 
 # Run CORTEX demo
 demo:

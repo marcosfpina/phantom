@@ -505,22 +505,28 @@ class ViabilityScorer:
         # Score breakdown
         parts.append("## Score Breakdown\n")
         parts.append(
-            f"- Activity: {breakdown.activity_score:.1f}/100 (weight: {breakdown.activity_weight:.0%})"
+            f"- Activity: {breakdown.activity_score:.1f}/100 "
+            f"(weight: {breakdown.activity_weight:.0%})"
         )
         parts.append(
-            f"- Quality: {breakdown.quality_score:.1f}/100 (weight: {breakdown.quality_weight:.0%})"
+            f"- Quality: {breakdown.quality_score:.1f}/100 "
+            f"(weight: {breakdown.quality_weight:.0%})"
         )
         parts.append(
-            f"- Complexity: {breakdown.complexity_score:.1f}/100 (weight: {breakdown.complexity_weight:.0%})"
+            f"- Complexity: {breakdown.complexity_score:.1f}/100 "
+            f"(weight: {breakdown.complexity_weight:.0%})"
         )
         parts.append(
-            f"- Security: {breakdown.security_score:.1f}/100 (weight: {breakdown.security_weight:.0%})"
+            f"- Security: {breakdown.security_score:.1f}/100 "
+            f"(weight: {breakdown.security_weight:.0%})"
         )
         parts.append(
-            f"- Maintenance: {breakdown.maintenance_score:.1f}/100 (weight: {breakdown.maintenance_weight:.0%})"
+            f"- Maintenance: {breakdown.maintenance_score:.1f}/100 "
+            f"(weight: {breakdown.maintenance_weight:.0%})"
         )
         parts.append(
-            f"- Potential: {breakdown.potential_score:.1f}/100 (weight: {breakdown.potential_weight:.0%})"
+            f"- Potential: {breakdown.potential_score:.1f}/100 "
+            f"(weight: {breakdown.potential_weight:.0%})"
         )
 
         # Key insights
@@ -620,9 +626,8 @@ class ViabilityScorer:
                 actions.append("Split large files into smaller, focused modules")
 
         # Maintenance
-        if breakdown.maintenance_score < 50:
-            if metrics.dependencies.outdated_dependencies > 5:
-                actions.append("Update outdated dependencies")
+        if breakdown.maintenance_score < 50 and metrics.dependencies.outdated_dependencies > 5:
+            actions.append("Update outdated dependencies")
 
         # Potential
         if breakdown.potential_score < 50:
@@ -654,7 +659,9 @@ class ViabilityScorer:
             risks.append(
                 RiskFactor(
                     category="Security",
-                    description=f"{metrics.security.vulnerabilities_critical} critical vulnerabilities",
+                    description=(
+                        f"{metrics.security.vulnerabilities_critical} critical vulnerabilities"
+                    ),
                     severity=RiskLevel.CRITICAL,
                     impact="Potential security breach or exploitation",
                     mitigation="Immediately update affected dependencies",
@@ -666,7 +673,10 @@ class ViabilityScorer:
             risks.append(
                 RiskFactor(
                     category="Security",
-                    description=f"Detected {metrics.security.secrets_detected} potential secrets in code",
+                    description=(
+                        f"Detected {metrics.security.secrets_detected} "
+                        "potential secrets in code"
+                    ),
                     severity=RiskLevel.HIGH,
                     impact="Credential exposure risk",
                     mitigation="Remove secrets, use environment variables or secrets manager",
@@ -708,7 +718,10 @@ class ViabilityScorer:
             risks.append(
                 RiskFactor(
                     category="Complexity",
-                    description=f"Extremely complex code (CC max: {metrics.complexity.cyclomatic_complexity_max})",
+                    description=(
+                        "Extremely complex code "
+                        f"(CC max: {metrics.complexity.cyclomatic_complexity_max})"
+                    ),
                     severity=RiskLevel.MEDIUM,
                     impact="High bug risk and maintenance burden",
                     mitigation="Refactor complex functions; add comprehensive tests",
@@ -750,7 +763,10 @@ class ViabilityScorer:
             suggestions.append(
                 ImprovementSuggestion(
                     title="Create README",
-                    description="Add a comprehensive README with installation, usage, and contribution guidelines",
+                    description=(
+                        "Add a comprehensive README with installation, usage, "
+                        "and contribution guidelines"
+                    ),
                     priority=RiskLevel.HIGH,
                     category="documentation",
                     effort_estimate="low",
@@ -764,7 +780,10 @@ class ViabilityScorer:
             suggestions.append(
                 ImprovementSuggestion(
                     title="Increase Test Coverage",
-                    description=f"Current estimated coverage is {metrics.quality.test_coverage_estimate:.0f}%. Target 60%+",
+                    description=(
+                        f"Current estimated coverage is "
+                        f"{metrics.quality.test_coverage_estimate:.0f}%. Target 60%+"
+                    ),
                     priority=RiskLevel.MEDIUM,
                     category="testing",
                     effort_estimate="medium",

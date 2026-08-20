@@ -21,29 +21,34 @@ Modules:
     cli      - Typer CLI interface
 """
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __codename__ = "PHANTOM"
 
-# Core exports
-# Analysis exports
-from phantom.analysis import (
-    SentimentEngine,
-    SpectreAnalyzer,
-    ViabilityScorer,
-)
-from phantom.core import (
-    CortexProcessor,
-    EmbeddingGenerator,
-    SemanticChunker,
-)
+_LAZY_EXPORTS = {
+    "CortexProcessor": ("phantom.core", "CortexProcessor"),
+    "SemanticChunker": ("phantom.core", "SemanticChunker"),
+    "EmbeddingGenerator": ("phantom.core", "EmbeddingGenerator"),
+    "SentimentEngine": ("phantom.analysis", "SentimentEngine"),
+    "SpectreAnalyzer": ("phantom.analysis", "SpectreAnalyzer"),
+    "ViabilityScorer": ("phantom.analysis", "ViabilityScorer"),
+    "DAGPipeline": ("phantom.pipeline", "DAGPipeline"),
+    "PhantomPipeline": ("phantom.pipeline", "PhantomPipeline"),
+    "FileClassifier": ("phantom.pipeline", "FileClassifier"),
+    "DataSanitizer": ("phantom.pipeline", "DataSanitizer"),
+}
 
-# Pipeline exports
-from phantom.pipeline import (
-    DAGPipeline,
-    DataSanitizer,
-    FileClassifier,
-    PhantomPipeline,
-)
+
+def __getattr__(name):
+    """Resolve public exports lazily to keep lightweight imports cheap."""
+    if name not in _LAZY_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attr_name = _LAZY_EXPORTS[name]
+    from importlib import import_module
+
+    value = getattr(import_module(module_name), attr_name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     # Version info

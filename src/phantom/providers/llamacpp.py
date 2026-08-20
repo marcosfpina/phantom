@@ -107,7 +107,6 @@ class LlamaCppProvider(AIProvider):
     async def stream(self, prompt: str, **kwargs) -> "AsyncIterator[str]":
         """Stream tokens from LlamaCPP server using server-sent events."""
         import asyncio
-        from collections.abc import AsyncIterator
 
         payload = {
             "prompt": prompt,

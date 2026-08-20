@@ -35,7 +35,7 @@ async def start_consumer() -> None:
         import nats
         kwargs = {}
         if not nkey_seed and nkey_seed_file and os.path.exists(nkey_seed_file):
-            with open(nkey_seed_file, "r", encoding="utf-8") as handle:
+            with open(nkey_seed_file, encoding="utf-8") as handle:
                 for line in handle:
                     candidate = line.strip()
                     if candidate and not candidate.startswith("#"):

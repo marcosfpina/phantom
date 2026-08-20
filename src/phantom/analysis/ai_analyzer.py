@@ -489,7 +489,8 @@ QUALITY:
 
 SECURITY:
 - Security score: {metrics.security.security_score:.1f}/100
-- Vulnerabilities: {metrics.security.vulnerabilities_critical} critical, {metrics.security.vulnerabilities_high} high
+- Vulnerabilities: {metrics.security.vulnerabilities_critical} critical, \
+{metrics.security.vulnerabilities_high} high
 - Secrets detected: {metrics.security.secrets_detected}
 
 DEPENDENCIES:
@@ -641,7 +642,8 @@ Provide a brief, actionable assessment focusing on the most critical issues.
         Returns:
             List of improvement suggestions
         """
-        prompt = f"""Based on the following project metrics, provide 5 specific, actionable improvement suggestions.
+        prompt = f"""Based on the following project metrics, provide 5 specific, actionable \
+improvement suggestions.
 Prioritize by impact and effort.
 
 PROJECT: {metrics.name}

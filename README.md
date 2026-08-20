@@ -1,9 +1,9 @@
 <h1 align="center">PHANTOM</h1>
 
 <p align="center">
-  <strong>Local-first document intelligence for private data pipelines.</strong>
+  <strong>Local-first document intelligence and confined writing sandbox.</strong>
   <br />
-  Classify, sanitize, index, and query unstructured data without sending it to a cloud by default.
+  Classify, sanitize, index, think, write, and publish without sending private context to a cloud by default.
 </p>
 
 <p align="center">
@@ -26,9 +26,10 @@
 
 ---
 
-Phantom turns messy folders of documents, logs, configs, and code into structured
-intelligence: searchable chunks, sensitivity findings, sanitized exports,
-RAG-ready vector indexes, and audit-friendly processing reports.
+Phantom turns messy folders of documents, logs, configs, code, and raw notes
+into structured intelligence: searchable chunks, sensitivity findings,
+sanitized exports, RAG-ready vector indexes, writing workspaces, and
+audit-friendly processing reports.
 
 It is built for operators who care about data boundaries. The default path is
 local inference through `llama.cpp`, local vector search with FAISS/BM25, and a
@@ -36,6 +37,7 @@ reproducible Nix development environment. Cloud providers can be added through
 the provider abstraction, but the core workflow does not require them.
 
 > Data stays local. Search gets smarter. Operators keep control.
+> Thoughts stay safe. Drafts stay focused. Publishing stays explicit.
 
 ## Why Phantom
 
@@ -46,7 +48,8 @@ the provider abstraction, but the core workflow does not require them.
 | Prepare data safely | DAG classification, PII detection, pseudonymization, sanitization, quarantine |
 | Search beyond keywords | Hybrid retrieval with FAISS dense search plus BM25 sparse search |
 | Operate like a real system | Typer CLI, FastAPI service, Prometheus metrics, Nix, Docker, tests |
-| Give users a GUI | Cortex Desktop, a Tauri 2 + SvelteKit client for the local API |
+| Think and write safely | GTK4 Writer Sandbox with dump, distill, draft, review, and export flows |
+| Give users a GUI | Phantom Writer Desktop, a native GTK4/libadwaita client |
 
 ## Architecture Tour
 
@@ -56,10 +59,11 @@ flowchart LR
     dag --> cortex[CORTEX<br/>chunk + extract]
     cortex --> vectors[FAISS + BM25<br/>hybrid retrieval]
     vectors --> rag[RAG chat<br/>streaming API]
+    rag --> writer[Writer Sandbox<br/>dump + distill + draft]
 
     cli[phantom CLI] --> dag
     api[FastAPI service] --> dag
-    desktop[Cortex Desktop] --> api
+    desktop[Phantom Writer Desktop] --> api
     providers[LLM providers<br/>llama.cpp first] --> cortex
     events[NATS hooks] --> api
 ```
@@ -67,8 +71,8 @@ flowchart LR
 ```text
 phantom/
 ├── src/phantom/        # Python runtime: CLI, FastAPI, CORTEX, RAG, DAG, providers
-├── cortex-desktop/     # Tauri 2 + SvelteKit desktop client
-├── intelagent/         # Rust agent and quality-gate primitives
+├── apps/desktop/       # GTK4/libadwaita Writer Sandbox desktop client
+├── cortex-desktop/     # Legacy Tauri 2 + SvelteKit desktop client
 ├── spectre/            # Companion signal/pattern extraction scaffold
 ├── nix/ + flake.nix    # Reproducible development, packages, and checks
 ├── docs/               # Architecture, guides, deployment notes, history
@@ -99,7 +103,7 @@ Then check the API:
 curl http://localhost:8008/health
 ```
 
-Run the desktop client:
+Run the desktop Writer Sandbox:
 
 ```bash
 just desktop
@@ -182,7 +186,8 @@ sanitizes content, records fingerprints, and isolates suspicious outputs.
 | --- | --- | --- |
 | CLI | `phantom` | Extraction, analysis, classification, scans, RAG, tools, API startup |
 | API | `phantom-api` / `just serve` | Health, metrics, upload, process, vector, chat, pipeline, judge endpoints |
-| Desktop | `just desktop` | Tauri/Svelte GUI for local workflows |
+| Desktop | `just desktop` | GTK4 Writer Sandbox for dump, distill, draft, review, and export workflows |
+| Legacy Desktop | `just desktop-legacy` | Previous Tauri/Svelte GUI while migration is in progress |
 | Nix | `nix develop`, `nix build`, `nix flake check` | Reproducible shell, packages, and checks |
 | Docker | `Dockerfile` | OCI fallback for non-Nix environments |
 | IntelAgent | `intelagent/` | Rust agent abstractions and quality-gate primitives |
@@ -197,6 +202,7 @@ The FastAPI server exposes OpenAPI docs at `/docs` when running.
 | Documents | `POST /extract`, `POST /process`, `POST /upload`, `POST /api/upload` |
 | Vectors | `POST /vectors/index`, `POST /vectors/batch-index`, `POST /vectors/search` |
 | Chat | `POST /api/chat`, `POST /api/chat/stream`, `GET /api/models`, `POST /api/prompt/test` |
+| Writer | `POST /api/writer/workspaces`, `POST /api/writer/dumps`, `POST /api/writer/drafts`, `POST /api/writer/publish/git` |
 | Pipeline | `POST /api/pipeline`, `POST /api/pipeline/scan` |
 | Integrations | `GET /rag/query`, `POST /judge` |
 
@@ -229,9 +235,10 @@ just audit
 | --- | --- |
 | [Project Topology](docs/architecture/project_topology.rst) | Canonical map of live code, docs, generated reports, and archive areas |
 | [CORTEX Architecture](docs/architecture/CORTEX_V2_ARCHITECTURE.md) | Chunking, embeddings, vector storage, retrieval, and VRAM notes |
+| [Writer Sandbox](docs/guides/WRITER_SANDBOX.md) | Brain dump, distill, draft, review, and publish workflow |
 | [Roadmap](docs/guides/ROADMAP.md) | Shipped, active, and planned work |
 | [Deployment](docs/DEPLOYMENT.md) | Deployment notes for production surfaces |
-| [Desktop Setup](docs/development/CORTEX_DESKTOP_SETUP.md) | Cortex Desktop development setup |
+| [Desktop Setup](docs/development/CORTEX_DESKTOP_SETUP.md) | Legacy Cortex Desktop setup during GTK4 migration |
 | [Security Policy](SECURITY.md) | Vulnerability reporting and security process |
 
 ## Current Status
@@ -243,8 +250,8 @@ just audit
 | CORTEX chunking and extraction | Live |
 | FAISS/BM25 retrieval | Live |
 | DAG classification and sanitization | Live |
-| Cortex Desktop | Beta |
-| IntelAgent Rust workspace | Scaffolded |
+| Phantom Writer Desktop GTK4 | Initial MVP |
+| Cortex Desktop Tauri/Svelte | Legacy |
 | Cloud LLM providers | Planned |
 | Redis semantic cache | Planned |
 | Helm/Kubernetes packaging | Planned |
@@ -253,9 +260,10 @@ just audit
 
 Near-term work:
 
-- Finish desktop sub-components and frontend test infrastructure.
-- Add a system metrics dashboard tab wired to `/api/system/metrics`.
-- Implement markdown/code rendering in chat.
+- Bring Python lint/test baseline back to green with unmasked checks.
+- Expand GTK4 Writer UX beyond the initial dump/distill/write/export shell.
+- Add tests for Writer API, filesystem storage, review gates, and Git publish.
+- Add workspace-constrained RAG context to the Writer Desktop.
 - Add Redis or in-memory semantic caching for repeated embeddings and queries.
 - Expand provider implementations beyond the current `llama.cpp` path.
 

@@ -292,7 +292,7 @@ async def validate_providers():
     try:
         r = _req.get("http://localhost:8081/health", timeout=3)
         results["tensor_forge"] = {"ok": r.ok, "status": r.status_code, "detail": r.text[:200]}
-    except Exception as e:
+    except Exception:
         # Try /v1/models as fallback probe
         try:
             r = _req.get("http://localhost:8081/v1/models", timeout=3)

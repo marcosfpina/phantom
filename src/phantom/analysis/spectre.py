@@ -431,10 +431,7 @@ class VADERAnalyzer:
     def _is_negated(self, tokens: list[str], idx: int, window: int = 3) -> bool:
         """Check if word at idx is negated within window"""
         start = max(0, idx - window)
-        for i in range(start, idx):
-            if tokens[i].lower() in self.NEGATIONS:
-                return True
-        return False
+        return any(tokens[i].lower() in self.NEGATIONS for i in range(start, idx))
 
     def _get_booster_score(self, word: str) -> float:
         """Get booster/dampener score for word"""
@@ -1056,10 +1053,7 @@ class MarkdownParser:
         else:
             for i, (line_num, level, header_text) in enumerate(headers):
                 # Determine end of section
-                if i + 1 < len(headers):
-                    end_line = headers[i + 1][0] - 1
-                else:
-                    end_line = len(lines) - 1
+                end_line = headers[i + 1][0] - 1 if i + 1 < len(headers) else len(lines) - 1
 
                 # Extract section content
                 section_lines = lines[line_num + 1 : end_line + 1]
@@ -1431,9 +1425,8 @@ class EntityExtractor:
                 window_text = text[window_start:window_end].lower()
 
                 for other in entities:
-                    if other.text != entity.text:
-                        if other.text.lower() in window_text:
-                            co_occurring.add(other.text)
+                    if other.text != entity.text and other.text.lower() in window_text:
+                        co_occurring.add(other.text)
 
             entity.co_occurrences = list(co_occurring)
 
@@ -1597,18 +1590,16 @@ class SpectreAnalyzer:
         )
 
         # Find dominant dimension
-        dimension_scores = {
-            dim: abs(results[dim].compound) for dim in self.sentiment_analyzers.keys()
-        }
+        dimension_scores = {dim: abs(results[dim].compound) for dim in self.sentiment_analyzers}
         dominant = max(dimension_scores, key=dimension_scores.get)
 
         # Calculate sentiment divergence (how much dimensions disagree)
-        compounds = [results[dim].compound for dim in self.sentiment_analyzers.keys()]
+        compounds = [results[dim].compound for dim in self.sentiment_analyzers]
         divergence = statistics.stdev(compounds) if len(compounds) > 1 else 0.0
 
         # Average confidence
         avg_confidence = statistics.mean(
-            results[dim].confidence for dim in self.sentiment_analyzers.keys()
+            results[dim].confidence for dim in self.sentiment_analyzers
         )
 
         return MultiDimensionalSentiment(
@@ -1884,14 +1875,16 @@ class SpectreAnalyzer:
                     if abs(score - mean) > 2 * stdev:
                         direction = "positive" if score > mean else "negative"
                         anomalies.append(
-                            f"🔍 Outlier: '{analysis.filename}' has unusually {direction} sentiment ({score:.2f})"
+                            f"🔍 Outlier: '{analysis.filename}' has unusually {direction} "
+                            f"sentiment ({score:.2f})"
                         )
 
         # Detect high divergence documents
         for analysis in analyses:
             if analysis.sentiment and analysis.sentiment.sentiment_divergence > 0.5:
                 anomalies.append(
-                    f"🔍 Mixed signals: '{analysis.filename}' shows high sentiment divergence across dimensions"
+                    f"🔍 Mixed signals: '{analysis.filename}' shows high sentiment "
+                    "divergence across dimensions"
                 )
 
         return anomalies[:10]  # Limit to top 10
@@ -2152,7 +2145,8 @@ class SpectrePipeline:
     def _generate_csv(self, output_path: Path):
         """Generate sentiment data CSV"""
         lines = [
-            "filename,word_count,overall,technical,market,community,innovation,risk,dominant_dimension"
+            "filename,word_count,overall,technical,market,community,innovation,risk,"
+            "dominant_dimension"
         ]
 
         for analysis in self.analyses:
@@ -2185,14 +2179,23 @@ class SpectrePipeline:
 
     def _print_summary(self, insights: CorpusInsights, duration: float):
         """Print execution summary"""
+        throughput = insights.total_documents / max(duration, 0.001)
+        documents_row = (
+            f"║  Documents Analyzed:    {insights.total_documents:>10}"
+            "                                               ║"
+        )
+        words_row = (
+            f"║  Total Words:           {insights.total_words:>10,}"
+            "                                               ║"
+        )
         print(f"""
 {Colors.GREEN}╔══════════════════════════════════════════════════════════════════════════════════╗
 ║                              EXECUTION SUMMARY                                    ║
 ╠══════════════════════════════════════════════════════════════════════════════════╣
-║  Documents Analyzed:    {insights.total_documents:>10}                                               ║
-║  Total Words:           {insights.total_words:>10,}                                               ║
+{documents_row}
+{words_row}
 ║  Processing Time:       {duration:>10.2f}s                                              ║
-║  Throughput:            {insights.total_documents / max(duration, 0.001):>10.2f} docs/sec                                        ║
+║  Throughput:            {throughput:>10.2f} docs/sec                                        ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝{Colors.RESET}
 """)
 

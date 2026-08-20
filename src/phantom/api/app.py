@@ -9,8 +9,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, Response, UploadFile
 from fastapi.responses import StreamingResponse
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 
 from phantom.logging import configure_logging, get_logger
 
@@ -129,9 +129,10 @@ class BatchIndexResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan: connect NATS publisher + start consumer on startup."""
-    from phantom.nats.publisher import connect as nats_connect, drain as nats_drain
     from phantom.nats.consumer import start_consumer, stop_consumer
     from phantom.nats.neoland_scanner import start_scanner, stop_scanner
+    from phantom.nats.publisher import connect as nats_connect
+    from phantom.nats.publisher import drain as nats_drain
 
     await nats_connect()
     consumer_task = asyncio.ensure_future(start_consumer())
@@ -164,6 +165,10 @@ def create_app() -> FastAPI:
         version=__version__,
         lifespan=lifespan,
     )
+
+    from phantom.writer.api import router as writer_router
+
+    app.include_router(writer_router)
 
     # ── Middleware: instrument every request ────────────────────────
 
@@ -201,7 +206,6 @@ def create_app() -> FastAPI:
 
         # Vector store availability (lazy: only checked if previously initialised)
         try:
-            from phantom.rag.vectors import FAISSVectorStore  # noqa: F811
 
             checks["vector_store"] = True
         except Exception:
@@ -541,8 +545,6 @@ def create_app() -> FastAPI:
         Index a document into the FAISS vector store.
         Chunks the document and generates embeddings for semantic search.
         """
-        import tempfile
-        from pathlib import Path
 
         from phantom.core.cortex import SemanticChunker
 
@@ -786,7 +788,6 @@ def create_app() -> FastAPI:
         RAG-powered chat with Server-Sent Events streaming.
         Returns tokens as they are generated for lower perceived latency.
         """
-        import asyncio
 
         async def event_generator():
             try:
@@ -879,8 +880,8 @@ def create_app() -> FastAPI:
         from pathlib import Path
 
         from phantom.pipeline.phantom_dag import (
-            PipelineContext,
             PhantomPipeline,
+            PipelineContext,
             SanitizationPolicy,
         )
 
@@ -1044,6 +1045,7 @@ def serve():
     """Entry point for phantom-api script."""
     import argparse
     import os
+
     import uvicorn
 
     parser = argparse.ArgumentParser(description="Phantom API Server")

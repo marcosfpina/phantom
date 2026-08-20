@@ -142,8 +142,8 @@ def classify(
 ):
     """Classify files into categories using the DAG pipeline."""
     from phantom.pipeline.phantom_dag import (
-        PipelineContext,
         PhantomPipeline,
+        PipelineContext,
         SanitizationPolicy,
     )
 

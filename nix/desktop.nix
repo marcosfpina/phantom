@@ -27,8 +27,8 @@ python313Packages.buildPythonApplication rec {
   propagatedBuildInputs = with python313Packages; [
     pygobject3
     pycairo
-    # Phantom dependencies
     pydantic
+    pyyaml
     rich
   ];
 
@@ -38,12 +38,14 @@ python313Packages.buildPythonApplication rec {
   installPhase = ''
     mkdir -p $out/bin $out/share/applications $out/share/phantom
 
-    # Copy the main script
+    # Copy the runtime source and main script
+    cp -r src $out/share/phantom/src
     cp apps/desktop/main.py $out/share/phantom/phantom-desktop.py
 
     # Create launcher script
     cat > $out/bin/phantom-desktop << EOF
     #!/usr/bin/env bash
+    export PYTHONPATH=$out/share/phantom/src:\''${PYTHONPATH:-}
     exec python3 $out/share/phantom/phantom-desktop.py "\$@"
     EOF
     chmod +x $out/bin/phantom-desktop
@@ -64,8 +66,8 @@ python313Packages.buildPythonApplication rec {
   meta = with lib; {
     description = "Phantom Desktop - Native GTK4 Document Intelligence";
     homepage = "https://github.com/VoidNxSEC/phantom";
-    license = licenses.ALv2;
-    maintainers = [VoidNxSEC];
+    license = licenses.asl20;
+    maintainers = [];
     mainProgram = "phantom-desktop";
     platforms = platforms.linux;
   };

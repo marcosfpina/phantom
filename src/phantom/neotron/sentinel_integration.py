@@ -13,7 +13,6 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger("phantom.neotron.sentinel")
 
@@ -28,9 +27,9 @@ try:
     from neutron.compliance.sentinel import (
         AgentOutput,
         ComplianceGuardrail,
-        ValidationResult,
-        EnforcedOutput,
         ComplianceViolation,
+        EnforcedOutput,
+        ValidationResult,
     )
     NEOTRON_AVAILABLE = True
     logger.info("Neotron SENTINEL loaded successfully")

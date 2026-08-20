@@ -1,0 +1,28 @@
+"""Shared text utilities for the Writer Sandbox."""
+
+STOP_WORDS = {
+    "a",
+    "ao",
+    "as",
+    "com",
+    "da",
+    "das",
+    "de",
+    "do",
+    "dos",
+    "e",
+    "em",
+    "essa",
+    "esse",
+    "isso",
+    "para",
+    "por",
+    "que",
+    "sem",
+    "the",
+    "and",
+    "for",
+    "that",
+    "this",
+    "with",
+}

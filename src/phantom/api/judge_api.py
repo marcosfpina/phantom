@@ -12,14 +12,15 @@ import logging
 from pathlib import Path
 
 from pydantic import BaseModel, Field
-from phantom.providers import get_storage_provider, LocalImmutableBucketProvider
+
+from phantom.providers import LocalImmutableBucketProvider, get_storage_provider
 
 logger = logging.getLogger("judge_api")
 
 # Importar Neotron integration
 try:
-    from phantom.neotron.sentinel_integration import PhantomSentinel
     from phantom.neotron.oracle_explainer import OracleExplainer
+    from phantom.neotron.sentinel_integration import PhantomSentinel
     NEOTRON_INTEGRATION_AVAILABLE = True
     logger.info("Neotron integration loaded successfully")
 except ImportError as e:

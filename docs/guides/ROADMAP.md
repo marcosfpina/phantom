@@ -1,61 +1,65 @@
 # Phantom Roadmap
 
-## Shipped
+## Active Direction
 
-- [x] Project reorganization (`src/phantom/` package structure)
-- [x] Import refactoring to new package layout
-- [x] CI/CD pipeline (lint, test, security scan, CodeQL, SBOM)
-- [x] Pre-commit hooks (ruff, mypy, bandit)
-- [x] CORTEX v2.0: semantic chunking, embeddings, parallel classification
-- [x] FAISS vector store with hybrid search (BM25 + cosine, RRF)
-- [x] FastAPI REST API with Prometheus metrics (22 endpoints)
-- [x] Sentiment analysis and entity extraction (SPECTRE)
-- [x] System resource monitoring endpoint
-- [x] pip-installable Python package
-- [x] Nix flake development environment
-- [x] Test coverage at 70%+ minimum (enforced in CI)
-- [x] CLI fully functional (extract, analyze, classify, scan, rag, tools)
-- [x] DAG pipeline exposed via REST (`/api/pipeline`, `/api/pipeline/scan`)
-- [x] SSE streaming chat (`/api/chat/stream`) with LlamaCpp streaming
-- [x] RAG ingestion and query via CLI (`phantom rag ingest`, `phantom rag query`)
-- [x] Cortex Desktop: Tauri 2.0 + SvelteKit 5 + Svelte 5 runes
-- [x] Cortex Desktop: 6 tab components (Chat, Process, Search, Workbench, Library, Settings)
-- [x] Cortex Desktop: centralized state management (`state.svelte.ts`, 320 LOC)
-- [x] Cortex Desktop: typed API client with Vite proxy to backend
-- [x] Cortex Desktop: Catppuccin Mocha theme, responsive layout
-- [x] Cortex Desktop: streaming chat integration
-- [x] IntelAgent core abstractions (Agent, Task, Context, Proof, QualityGate traits)
-- [x] IntelAgent SOC kernel (scheduler, task queue, agent pool, event bus, metrics, UI)
+Phantom is expanding from local-first document intelligence into a confined
+writing environment:
+
+> A safe place to think messily, write clearly, retrieve private context, and
+> publish Markdown without leaking workspace data by default.
+
+The active desktop direction is **GTK4/libadwaita**. The previous
+Tauri/Svelte Cortex Desktop remains in the repository as legacy code during the
+migration, but new product work should target `apps/desktop/`.
+
+## Shipped / Current
+
+- [x] Python package layout under `src/phantom/`
+- [x] FastAPI service with health, metrics, vector, chat, prompt, and pipeline endpoints
+- [x] CLI for extraction, classification, scanning, RAG, and utility tools
+- [x] CORTEX chunking, embeddings, and insight extraction
+- [x] FAISS/BM25 hybrid retrieval
+- [x] DAG classification, sanitization, quarantine, and reports
+- [x] Local-first LlamaCpp provider path
+- [x] Nix development shell
+- [x] Writer Sandbox service with Markdown-backed workspaces, dumps, drafts, review, export, and Git publishing
+- [x] Writer API under `/api/writer/*`
+- [x] Initial GTK4 Writer Desktop shell
 
 ## In Progress
 
-- [ ] Frontend sub-components (MessageBubble, FileUploader, ErrorToast, ResultCard)
-- [ ] Frontend test infrastructure — Vitest + Playwright (ADR-0018 P2)
+- [ ] Bring Python lint/test baseline back to green with unmasked checks
+- [ ] Expand GTK4 Writer UX beyond the initial dump/distill/write/export shell
+- [ ] Add focused tests for Writer API, filesystem storage, and publish gates
+- [ ] Update docs that still describe Tauri as the primary desktop surface
+- [ ] Harden API security defaults before any network-exposed deployment
 
-## Planned — Near Term
+## Near Term
 
-- [ ] System metrics dashboard tab (wire to `/api/system/metrics`)
-- [ ] Markdown rendering + code syntax highlighting in chat
-- [ ] IntelAgent: implement remaining crates (security, governance, memory, quality, mcp, cli)
-- [ ] In-memory/Redis cache layer for embeddings and queries (ADR-0018 P4)
-- [ ] Standalone binaries for Linux and macOS
-- [ ] Docker / OCI image
+- [ ] Writer workspace selector and explicit allowed-path management
+- [ ] Draft review UI for secrets/PII, missing frontmatter, assets, and claims
+- [ ] RAG-backed related-source panel constrained by workspace policy
+- [ ] Static-blog export presets for Hugo, Astro, and Jekyll
+- [ ] Git-over-SSH remote publish adapter with explicit confirmation
+- [ ] Autosave/version history for dumps and drafts
 
-## Planned — Long Term
+## Long Term
 
-- [ ] Cloud LLM providers (OpenAI, Anthropic, DeepSeek)
-- [ ] Windows validation
+- [ ] Rsync/SFTP publish adapter
+- [ ] WordPress/Ghost adapters
+- [ ] Voice/audio dump capture
+- [ ] Offline model management from the desktop app
 - [ ] NixOS module for system-level deployment
-- [ ] IntelAgent advanced features (ZK proofs, DAO governance, MCP server)
-- [ ] Distributed / multi-node processing
+- [ ] Distributed/multi-node processing only after local sandbox semantics are stable
+
+## Legacy
+
+- `cortex-desktop/` is the legacy Tauri/Svelte desktop implementation.
+- Active commands use `phantom-desktop`; legacy commands should be explicitly
+  named with `legacy`.
+- New desktop features should not be added to Tauri unless they are needed to
+  preserve migration compatibility.
 
 ---
 
-> **Note**: `phantom-ray/phantom-stack/libs/intelagent/` is a stale copy of the IntelAgent
-> workspace from ~2026-01-14. The canonical version lives in `phantom/intelagent/` —
-> phantom-ray's copy has compile errors (`Vec<QualityGate>` instead of `Vec<Box<dyn QualityGate>>`)
-> and missing Clone support. Do not use phantom-ray's version.
-
----
-
-*Last updated: 2026-03-25*
+*Last updated: 2026-07-22*

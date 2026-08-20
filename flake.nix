@@ -91,6 +91,10 @@
               rich
               tqdm
 
+              # Native GTK4 desktop
+              pygobject3
+              pycairo
+
               # HTTP & Networking
               requests
 
@@ -183,19 +187,7 @@
         ];
 
         # ═══════════════════════════════════════════════════════════════
-        # RUST BUILD CONFIGURATION (IntelAgent)
-        # ═══════════════════════════════════════════════════════════════
-        intelagentSrc = craneLib.cleanCargoSource ./intelagent;
-
-        intelagentArgs = {
-          src = intelagentSrc;
-          strictDeps = true;
-        };
-
-        intelagentArtifacts = craneLib.buildDepsOnly intelagentArgs;
-
-        # ═══════════════════════════════════════════════════════════════
-        # RUST BUILD CONFIGURATION (Cortex Desktop)
+        # LEGACY RUST BUILD CONFIGURATION (Cortex Desktop / Tauri)
         # ═══════════════════════════════════════════════════════════════
 
         # Source filtering - include Tauri-specific files
@@ -353,20 +345,31 @@
         phantomApi = pkgs.writeScriptBin "phantom-api" ''
           #!${pkgs.bash}/bin/bash
           export PYTHONPATH=$PYTHONPATH:${./.}/src
-          exec ${pythonEnv}/bin/python3 ${./.}/src/phantom/api/cortex_api.py "$@"
+          exec ${pythonEnv}/bin/python3 ${./.}/src/phantom/api/app.py "$@"
         '';
+
+        phantomDesktopDev = pkgs.writeScriptBin "phantom-desktop" ''
+          #!${pkgs.bash}/bin/bash
+          REPO_ROOT="''${PHANTOM_REPO_ROOT:-$(pwd)}"
+          export PYTHONPATH="$REPO_ROOT/src:''${PYTHONPATH:-}"
+          exec ${pythonEnv}/bin/python3 "$REPO_ROOT/apps/desktop/main.py" "$@"
+        '';
+
+        phantomDesktop = pkgs.callPackage ./nix/desktop.nix {};
       in {
         # ═══════════════════════════════════════════════════════════════
         # PACKAGES
         # ═══════════════════════════════════════════════════════════════
         packages = {
-          default = cortexDesktop;
-          cortexDesktop = cortexDesktop;
+          default = phantomDesktop;
           phantom = phantomCore;
+          phantomDesktop = phantomDesktop;
+          phantom-desktop = phantomDesktop;
           phantom-verify = phantomVerify;
           phantom-hash = phantomHash;
           phantom-scan = phantomScan;
           phantom-api = phantomApi;
+          cortexDesktopLegacy = cortexDesktop;
         };
 
         formatter = pkgs.alejandra;
@@ -375,38 +378,6 @@
         # CI/CD CHECKS
         # ═══════════════════════════════════════════════════════════════
         checks = {
-          # Rust tests
-          cortex-desktop-tests = craneLib.cargoNextest (
-            commonArgs
-            // {
-              inherit cargoArtifacts;
-              pname = "cortex-desktop-tests";
-              cargoNextestExtraArgs = "--all-features --workspace";
-            }
-          );
-
-          # Clippy lints
-          cortex-desktop-clippy = craneLib.cargoClippy (
-            commonArgs
-            // {
-              inherit cargoArtifacts;
-              pname = "cortex-desktop-clippy";
-              cargoClippyExtraArgs = "--all-features --workspace -- --deny warnings";
-            }
-          );
-
-          # Format check
-          cortex-desktop-fmt = craneLib.cargoFmt {
-            inherit src;
-            pname = "cortex-desktop-fmt";
-          };
-
-          # Security audit
-          cortex-desktop-audit = craneLib.cargoAudit {
-            inherit src advisory-db;
-            pname = "cortex-desktop-audit";
-          };
-
           # Python tests
           python-tests =
             pkgs.runCommand "python-tests"
@@ -416,7 +387,7 @@
             ''
               cd ${./.}
               export PYTHONPATH="${./.}/src:$PYTHONPATH"
-              ${pythonEnv}/bin/pytest tests/ -v || true
+              ${pythonEnv}/bin/pytest tests/ -v
               touch $out
             '';
 
@@ -428,7 +399,7 @@
             }
             ''
               cd ${./.}
-              ${pythonEnv}/bin/ruff check src/ || true
+              ${pythonEnv}/bin/ruff check src/
               touch $out
             '';
 
@@ -440,43 +411,9 @@
             }
             ''
               cd ${./.}
-              ${pythonEnv}/bin/ruff format --check src/ || true
+              ${pythonEnv}/bin/ruff format --check src/
               touch $out
             '';
-
-          # ─── IntelAgent checks ───────────────────────────────────────
-
-          # Cargo tests
-          intelagent-tests = craneLib.cargoTest (
-            intelagentArgs
-            // {
-              cargoArtifacts = intelagentArtifacts;
-              pname = "intelagent-tests";
-            }
-          );
-
-          # Clippy lints
-          intelagent-clippy = craneLib.cargoClippy (
-            intelagentArgs
-            // {
-              cargoArtifacts = intelagentArtifacts;
-              pname = "intelagent-clippy";
-              cargoClippyExtraArgs = "--all-features -- --deny warnings";
-            }
-          );
-
-          # Format check
-          intelagent-fmt = craneLib.cargoFmt {
-            src = intelagentSrc;
-            pname = "intelagent-fmt";
-          };
-
-          # Dependency audit
-          intelagent-audit = craneLib.cargoAudit {
-            src = intelagentSrc;
-            inherit advisory-db;
-            pname = "intelagent-audit";
-          };
         };
 
         # ═══════════════════════════════════════════════════════════════
@@ -487,15 +424,14 @@
 
           buildInputs =
             [
-              # Tauri Desktop App Dependencies
-              pkgs.gtk3
-              pkgs.webkitgtk_4_1
+              # GTK4 desktop app dependencies
               pkgs.openssl
               pkgs.pkg-config
-
-              # GTK4 for IntelAgent SOC
               pkgs.gtk4
               pkgs.libadwaita
+              pkgs.glib
+              pkgs.gobject-introspection
+              pkgs.gsettings-desktop-schemas
 
               # Rust Toolchain
               rustToolchain
@@ -513,12 +449,15 @@
               phantomHash
               phantomScan
               phantomApi
+              phantomDesktopDev
             ]
             ++ systemTools;
 
           shellHook = ''
             export PHANTOM_VERSION="${VERSION}"
+            export PHANTOM_REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
             export PYTHONDONTWRITEBYTECODE=1
+            export PYTHONPATH="$PHANTOM_REPO_ROOT/src:$PYTHONPATH"
 
             # Rust environment
             export RUST_BACKTRACE=1
@@ -541,10 +480,10 @@
             BANNER
             echo -e "\033[0m"
 
-            echo -e "\033[1;36m🔮 PROJECT STATUS: Production Ready (v${VERSION})\033[0m"
+            echo -e "\033[1;36m🔮 PROJECT STATUS: Writer Sandbox Expansion (v${VERSION})\033[0m"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo -e "  🔹 \033[1mPHANTOM CORE:\033[0m  Python 3.13, FastAPI, CORTEX V2.0"
-            echo -e "  🔹 \033[1mCORTEX GUI:\033[0m    Tauri 2.0, Rust Stable, SvelteKit"
+            echo -e "  🔹 \033[1mWRITER GUI:\033[0m     GTK4/libadwaita, local Markdown"
             echo -e "  🔹 \033[1mENVIRONMENT:\033[0m   Hermetic Nix Shell, Crane-backed builds"
             echo ""
 
@@ -574,9 +513,13 @@
         apps = {
           default = {
             type = "app";
-            program = "${cortexDesktop}/bin/cortex-desktop";
+            program = "${phantomDesktop}/bin/phantom-desktop";
           };
-          cortexDesktop = {
+          phantomDesktop = {
+            type = "app";
+            program = "${phantomDesktop}/bin/phantom-desktop";
+          };
+          cortexDesktopLegacy = {
             type = "app";
             program = "${cortexDesktop}/bin/cortex-desktop";
           };
