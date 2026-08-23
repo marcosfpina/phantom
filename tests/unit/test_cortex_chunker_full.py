@@ -16,7 +16,6 @@ from phantom.rag.cortex_chunker import (
     TokenCounter,
 )
 
-
 pytestmark = pytest.mark.unit
 
 SAMPLE_MD = """# Title

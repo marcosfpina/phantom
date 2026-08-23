@@ -8,7 +8,6 @@ import pytest
 
 from phantom.rag.cortex_chunker import ChunkStrategy, MarkdownChunker
 
-
 pytestmark = pytest.mark.unit
 
 TEST_DOCUMENT = """# Python Error Handling Guide

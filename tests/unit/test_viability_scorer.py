@@ -23,7 +23,6 @@ from phantom.core.metrics_schema import (
     TechStackMetrics,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

@@ -8,7 +8,6 @@ import pytest
 
 from phantom.neotron.oracle_explainer import ADRExplanation, Evidence, OracleExplainer
 
-
 pytestmark = pytest.mark.unit
 
 

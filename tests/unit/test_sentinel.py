@@ -11,12 +11,10 @@ from phantom.neotron.sentinel_integration import (
     AgentOutput,
     ComplianceViolation,
     PhantomSentinel,
-    ValidationResult,
     check_adr_traceability,
     check_has_explanation,
     check_recommendation_safety,
 )
-
 
 pytestmark = pytest.mark.unit
 

@@ -8,7 +8,6 @@ import pytest
 
 from phantom.core import cortex
 
-
 pytestmark = pytest.mark.unit
 
 

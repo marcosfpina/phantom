@@ -9,13 +9,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from phantom.providers.base import (
-    AIProvider,
     GenerationResult,
     ProviderConfig,
     ProviderStatus,
 )
 from phantom.providers.llamacpp import LlamaCppProvider
-
 
 pytestmark = pytest.mark.unit
 

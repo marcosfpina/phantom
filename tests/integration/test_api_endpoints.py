@@ -6,16 +6,15 @@ Covers happy path, error cases, and edge cases.
 """
 
 import asyncio
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from pydantic import ValidationError
 
 # Import the API
 from phantom.api.app import create_app
+
 
 # Create app and client
 @pytest.fixture
@@ -96,24 +95,24 @@ class TestSystemMetricsEndpoint:
         response = client.get("/api/system/metrics")
         assert response.status_code == 200
         data = response.json()
-        
+
         # Check CPU metrics
         assert "cpu" in data
         assert "percent" in data["cpu"]
         assert "count" in data["cpu"]
-        
+
         # Check memory metrics
         assert "memory" in data
         assert "total_bytes" in data["memory"]
         assert "used_bytes" in data["memory"]
         assert "available_bytes" in data["memory"]
         assert "percent" in data["memory"]
-        
+
         # Check disk metrics
         assert "disk" in data
         assert "total_bytes" in data["disk"]
         assert "used_bytes" in data["disk"]
-        
+
         # Check timestamp
         assert "timestamp" in data
         assert data["timestamp"] > 0
@@ -131,7 +130,7 @@ class TestDocumentProcessingEndpoints:
         response = client.post("/extract", json=payload)
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["filename"] == "test_report.md"
         assert "insights" in data
         assert "processing_time_seconds" in data
@@ -155,7 +154,7 @@ class TestDocumentProcessingEndpoints:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
             f.write(sample_markdown)
             temp_path = f.name
-        
+
         try:
             with open(temp_path, 'rb') as f:
                 response = client.post(
@@ -163,7 +162,7 @@ class TestDocumentProcessingEndpoints:
                     files={"file": ("test.md", f, "text/markdown")},
                     params={"chunk_size": "1024"}
                 )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert "filename" in data
@@ -177,14 +176,14 @@ class TestDocumentProcessingEndpoints:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
             f.write(sample_markdown)
             temp_path = f.name
-        
+
         try:
             with open(temp_path, 'rb') as f:
                 response = client.post(
                     "/upload",
                     files={"file": ("test.md", f, "text/markdown")}
                 )
-            
+
             assert response.status_code == 200
             data = response.json()
             assert data["filename"] == "test.md"
@@ -196,22 +195,22 @@ class TestDocumentProcessingEndpoints:
     def test_api_upload_endpoint_multiple_files(self, client, sample_markdown):
         """Test /api/upload endpoint accepts multiple files."""
         temp_files = []
-        
+
         try:
             # Create multiple temp files
             for i in range(2):
                 with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as f:
                     f.write(sample_markdown)
                     temp_files.append(f.name)
-            
+
             # Upload files
             files = [("files", (Path(f).name, open(f, 'rb'), "text/markdown")) for f in temp_files]
             response = client.post("/api/upload", files=files)
-            
+
             # Cleanup files
             for _, (_, f, _) in files:
                 f.close()
-            
+
             assert response.status_code == 200
             data = response.json()
             assert "files" in data
@@ -228,7 +227,7 @@ class TestVectorStoreEndpoints:
         """Test /vectors/search handles empty vector store."""
         payload = {"query": "test", "top_k": 5}
         response = client.post("/vectors/search", json=payload)
-        
+
         # Should get 400 error about empty store
         assert response.status_code == 400
         assert "empty" in response.text.lower()
@@ -242,11 +241,11 @@ class TestVectorStoreEndpoints:
     def test_vector_search_with_mode_options(self, client):
         """Test /vectors/search accepts different search modes."""
         modes = ["dense", "sparse", "hybrid"]
-        
+
         for mode in modes:
             payload = {"query": "test", "top_k": 5, "mode": mode}
             response = client.post("/vectors/search", json=payload)
-            
+
             # Empty store should give 400, not invalid mode error
             assert response.status_code == 400
             data = response.json()
@@ -266,10 +265,10 @@ class TestRAGChatEndpoints:
             "llm_provider": "local"
         }
         response = client.post("/api/chat", json=payload)
-        
+
         # Should work or return 500 if LLM unavailable
         assert response.status_code in [200, 500]
-        
+
         if response.status_code == 200:
             data = response.json()
             assert "message" in data
@@ -281,10 +280,10 @@ class TestRAGChatEndpoints:
         response = client.get("/api/models")
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "local" in data
         assert isinstance(data["local"], list)
-        
+
         # Optional cloud providers
         assert "openai" in data
         assert "anthropic" in data
@@ -298,7 +297,7 @@ class TestRAGChatEndpoints:
         response = client.post("/api/prompt/test", json=payload)
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["success"] is True
         assert "Hello Claude, you are Assistant" in data["rendered"]
         assert "tokens" in data
@@ -313,7 +312,7 @@ class TestRAGChatEndpoints:
         response = client.post("/api/prompt/test", json=payload)
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["success"] is False
         assert data["error"] is not None
         assert "role" in data["error"].lower()
@@ -328,15 +327,15 @@ class TestPipelineEndpoints:
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.md"
             test_file.write_text(sample_markdown)
-            
+
             response = client.post(
                 "/api/pipeline/scan",
                 params={"directory": tmpdir, "top_n": 50}
             )
-            
+
             # May succeed or fail depending on classifier availability
             assert response.status_code in [200, 400]
-            
+
             if response.status_code == 200:
                 data = response.json()
                 assert "directory" in data
@@ -381,7 +380,7 @@ class TestConcurrency:
             for _ in range(10)
         ]
         responses = await asyncio.gather(*tasks)
-        
+
         assert all(r.status_code == 200 for r in responses)
         assert len(responses) == 10
 
@@ -393,7 +392,7 @@ class TestConcurrency:
             for _ in range(5)
         ]
         responses = await asyncio.gather(*tasks)
-        
+
         assert all(r.status_code == 200 for r in responses)
         assert len(responses) == 5
 

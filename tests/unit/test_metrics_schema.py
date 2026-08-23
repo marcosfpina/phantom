@@ -20,7 +20,6 @@ from phantom.core.metrics_schema import (
     ViabilityScore,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

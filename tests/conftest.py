@@ -9,7 +9,6 @@ Usage:
 import numpy as np
 import pytest
 
-
 # ── Vector / Embedding fixtures ─────────────────────────────────────
 
 EMBEDDING_DIM = 4  # Small dim for fast unit tests

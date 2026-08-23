@@ -18,7 +18,6 @@ from phantom.api.judge_api import (
     ThermalMetrics,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

@@ -16,7 +16,6 @@ from phantom.analysis.latency_optimizer import (
     QueryCache,
 )
 
-
 pytestmark = pytest.mark.unit
 
 

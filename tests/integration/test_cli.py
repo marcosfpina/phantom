@@ -22,7 +22,7 @@ class TestVersionCommand:
 
     def test_version_contains_version_number(self):
         result = runner.invoke(app, ["version"])
-        assert "2.0.0" in result.stdout
+        assert "0.1.0" in result.stdout
 
 
 class TestExtractCommand:

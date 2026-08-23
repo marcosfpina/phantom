@@ -4,13 +4,11 @@ Unit tests for the embeddings module.
 Tests that load the sentence-transformers model are marked @pytest.mark.slow.
 """
 
-from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 
 from phantom.core.embeddings import EmbeddingGenerator, EmbeddingResult
-
 
 pytestmark = pytest.mark.unit
 

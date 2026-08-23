@@ -12,9 +12,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from phantom.cerebro.knowledge_loader import ADRDocument, ADRKnowledgeLoader
 from phantom.cerebro.rag_engine import CerebroRAG
-
 
 pytestmark = pytest.mark.unit
 

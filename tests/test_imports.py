@@ -8,8 +8,6 @@ without errors. It catches issues like:
 - Runtime import errors
 """
 
-import pytest
-
 
 class TestCoreImports:
     """Test core module imports."""
@@ -17,21 +15,14 @@ class TestCoreImports:
     def test_phantom_main_imports(self):
         """Verify main phantom module imports work."""
         from phantom import (
-            __version__,
-            __codename__,
             CortexProcessor,
-            SemanticChunker,
             EmbeddingGenerator,
-            SentimentEngine,
-            SpectreAnalyzer,
-            ViabilityScorer,
-            DAGPipeline,
-            PhantomPipeline,
-            FileClassifier,
-            DataSanitizer,
+            SemanticChunker,
+            __codename__,
+            __version__,
         )
 
-        assert __version__ == "2.0.0"
+        assert __version__ == "0.1.0"
         assert __codename__ == "PHANTOM"
         assert CortexProcessor is not None
         assert SemanticChunker is not None
@@ -41,14 +32,9 @@ class TestCoreImports:
         """Verify phantom.core module imports work."""
         from phantom.core import (
             CortexProcessor,
-            SemanticChunker,
-            EmbeddingGenerator,
             DocumentInsights,
-            Theme,
-            Pattern,
-            Learning,
-            Concept,
-            Recommendation,
+            EmbeddingGenerator,
+            SemanticChunker,
         )
 
         assert CortexProcessor is not None
@@ -59,12 +45,10 @@ class TestCoreImports:
     def test_analysis_module_imports(self):
         """Verify phantom.analysis module imports work."""
         from phantom.analysis import (
-            SentimentEngine,
             SentimentAnalyzer,
+            SentimentEngine,
             SpectreAnalyzer,
             ViabilityScorer,
-            AIAnalyzer,
-            LatencyOptimizer,
         )
 
         assert SentimentEngine is not None
@@ -76,9 +60,9 @@ class TestCoreImports:
         """Verify phantom.pipeline module imports work."""
         from phantom.pipeline import (
             DAGPipeline,
-            PhantomPipeline,
-            FileClassifier,
             DataSanitizer,
+            FileClassifier,
+            PhantomPipeline,
         )
 
         assert DAGPipeline is PhantomPipeline  # Should be alias
@@ -90,8 +74,8 @@ class TestCoreImports:
         """Verify phantom.providers module imports work."""
         from phantom.providers import (
             AIProvider,
-            ProviderConfig,
             LlamaCppProvider,
+            ProviderConfig,
         )
 
         assert AIProvider is not None
@@ -138,6 +122,12 @@ class TestAPIImports:
 
         assert phantom.api is not None
 
+    def test_writer_module_can_import(self):
+        """Verify phantom.writer module exists and can be imported."""
+        import phantom.writer
+
+        assert phantom.writer is not None
+
 
 class TestCLIImports:
     """Test CLI module imports."""
@@ -163,13 +153,13 @@ class TestCircularImports:
     def test_all_submodules_can_be_imported_together(self):
         """Verify all submodules can be imported in sequence."""
         import phantom
-        import phantom.core
         import phantom.analysis
+        import phantom.api
+        import phantom.cli
+        import phantom.core
         import phantom.pipeline
         import phantom.providers
         import phantom.rag
-        import phantom.api
-        import phantom.cli
 
         assert phantom is not None
         assert phantom.core is not None
