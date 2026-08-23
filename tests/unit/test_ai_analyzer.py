@@ -30,7 +30,7 @@ class TestAIConfig:
 
     def test_defaults(self):
         config = AIConfig()
-        assert config.local_url == "http://localhost:8081"
+        assert config.local_url == "http://localhost:8080"
         assert config.max_tokens == 2048
         assert config.temperature == 0.3
         assert config.enable_fallback is True
@@ -62,8 +62,8 @@ class TestLlamaCppProviderUnit:
         assert provider.name == "llamacpp"
 
     def test_base_url_trailing_slash(self):
-        provider = LlamaCppProvider(base_url="http://localhost:8081/")
-        assert provider.base_url == "http://localhost:8081"
+        provider = LlamaCppProvider(base_url="http://localhost:8080/")
+        assert provider.base_url == "http://localhost:8080"
 
     def test_is_available_false_when_no_server(self):
         provider = LlamaCppProvider(base_url="http://localhost:99999")
@@ -77,9 +77,7 @@ class TestLlamaCppProviderUnit:
     def test_generate_returns_none_when_unavailable(self):
         provider = LlamaCppProvider()
         provider._available = False
-        result = asyncio.get_event_loop().run_until_complete(
-            provider.generate("test prompt")
-        )
+        result = asyncio.get_event_loop().run_until_complete(provider.generate("test prompt"))
         assert result is None
 
 
@@ -101,9 +99,7 @@ class TestDeepSeekProvider:
 
     def test_generate_returns_none_when_unavailable(self):
         provider = DeepSeekProvider(api_key="")
-        result = asyncio.get_event_loop().run_until_complete(
-            provider.generate("test")
-        )
+        result = asyncio.get_event_loop().run_until_complete(provider.generate("test"))
         assert result is None
 
 
@@ -268,9 +264,7 @@ WEAKNESSES:
             provider._available = False
 
         metrics = ProjectMetrics(project_id="test-id", name="test", path="/tmp")
-        result = asyncio.get_event_loop().run_until_complete(
-            analyzer.analyze_project(metrics)
-        )
+        result = asyncio.get_event_loop().run_until_complete(analyzer.analyze_project(metrics))
         assert isinstance(result, AIInsights)
         assert "unavailable" in result.summary.lower()
 

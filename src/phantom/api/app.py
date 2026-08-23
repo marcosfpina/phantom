@@ -111,6 +111,7 @@ class PromptTestResponse(BaseModel):
 
 class VectorSearchRequest(BaseModel):
     """Body for POST /vectors/search. Query params are still accepted for backward compatibility."""
+
     query: str
     top_k: int = 5
     mode: str = "dense"  # "dense" | "sparse" | "hybrid"
@@ -206,7 +207,6 @@ def create_app() -> FastAPI:
 
         # Vector store availability (lazy: only checked if previously initialised)
         try:
-
             checks["vector_store"] = True
         except Exception:
             checks["vector_store"] = False
@@ -261,7 +261,11 @@ def create_app() -> FastAPI:
             import subprocess
 
             result = subprocess.run(
-                ["nvidia-smi", "--query-gpu=memory.used,memory.total", "--format=csv,noheader,nounits"],
+                [
+                    "nvidia-smi",
+                    "--query-gpu=memory.used,memory.total",
+                    "--format=csv,noheader,nounits",
+                ],
                 capture_output=True,
                 text=True,
                 timeout=2,
@@ -344,7 +348,7 @@ def create_app() -> FastAPI:
                     from phantom.core.cortex import PromptBuilder
                     from phantom.providers.llamacpp import LlamaCppProvider
 
-                    provider = LlamaCppProvider(base_url="http://localhost:8081")
+                    provider = LlamaCppProvider()
                     if provider.is_available():
                         prompt = PromptBuilder.build_extraction_prompt(content, filename)
                         result = provider.generate(prompt)
@@ -443,7 +447,9 @@ def create_app() -> FastAPI:
         results = []
         for file in files:
             if not file.filename:
-                results.append({"filename": "unknown", "status": "error", "error": "Filename required"})
+                results.append(
+                    {"filename": "unknown", "status": "error", "error": "Filename required"}
+                )
                 continue
 
             content = await file.read()
@@ -455,13 +461,17 @@ def create_app() -> FastAPI:
                     tmp_path = Path(tmp.name)
 
                 try:
-                    processor = CortexProcessor(chunk_size=1024, enable_vectors=False, verbose=False)
+                    processor = CortexProcessor(
+                        chunk_size=1024, enable_vectors=False, verbose=False
+                    )
                     insights = processor.process_document(tmp_path)
-                    results.append({
-                        "filename": file.filename,
-                        "status": "processed",
-                        "insights": insights.model_dump(),
-                    })
+                    results.append(
+                        {
+                            "filename": file.filename,
+                            "status": "processed",
+                            "insights": insights.model_dump(),
+                        }
+                    )
                 finally:
                     if tmp_path.exists():
                         tmp_path.unlink()
@@ -685,7 +695,7 @@ def create_app() -> FastAPI:
             from phantom.providers.llamacpp import LlamaCppProvider
 
             # Use local llama.cpp for now
-            provider = LlamaCppProvider(base_url="http://localhost:8081")
+            provider = LlamaCppProvider()
 
             # Generate response
             try:
@@ -725,7 +735,7 @@ def create_app() -> FastAPI:
         try:
             from phantom.providers.llamacpp import LlamaCppProvider
 
-            provider = LlamaCppProvider(base_url="http://localhost:8081")
+            provider = LlamaCppProvider()
             status = await provider.health_check() if hasattr(provider, "health_check") else True
 
             if status:
@@ -778,9 +788,7 @@ def create_app() -> FastAPI:
 
         except Exception as e:
             logger.error(f"Prompt test failed: {e}")
-            return PromptTestResponse(
-                rendered="", tokens=0, success=False, error=str(e)
-            )
+            return PromptTestResponse(rendered="", tokens=0, success=False, error=str(e))
 
     @app.post("/api/chat/stream")
     async def rag_chat_stream(request: ChatRequest):
@@ -828,10 +836,12 @@ def create_app() -> FastAPI:
                 # Stream from LLM
                 from phantom.providers.llamacpp import LlamaCppProvider
 
-                provider = LlamaCppProvider(base_url="http://localhost:8081")
+                provider = LlamaCppProvider()
 
                 try:
-                    async for chunk in provider.stream(full_prompt, max_tokens=512, temperature=0.7):
+                    async for chunk in provider.stream(
+                        full_prompt, max_tokens=512, temperature=0.7
+                    ):
                         yield f"data: {json.dumps({'type': 'token', 'content': chunk})}\n\n"
                 except Exception as e:
                     logger.warning(f"LLM streaming failed: {e}")
@@ -936,9 +946,7 @@ def create_app() -> FastAPI:
 
         report = {
             "classifications": dict(by_classification),
-            "sensitive_files": sum(
-                1 for r in ctx.records.values() if r.sensitive_findings
-            ),
+            "sensitive_files": sum(1 for r in ctx.records.values() if r.sensitive_findings),
             "output_dir": str(output_dir),
         }
 
@@ -977,24 +985,28 @@ def create_app() -> FastAPI:
                 try:
                     classification, mime_type, sensitivity = ClassificationEngine.classify(filepath)
                     findings = ClassificationEngine.scan_sensitive_content(filepath)
-                    results.append({
-                        "path": str(filepath.relative_to(dir_path)),
-                        "classification": classification.value,
-                        "mime_type": mime_type,
-                        "sensitivity": sensitivity.value,
-                        "sensitive_patterns": [
-                            {"name": f.pattern_name, "count": f.count, "risk": f.risk_score}
-                            for f in findings
-                        ],
-                    })
+                    results.append(
+                        {
+                            "path": str(filepath.relative_to(dir_path)),
+                            "classification": classification.value,
+                            "mime_type": mime_type,
+                            "sensitivity": sensitivity.value,
+                            "sensitive_patterns": [
+                                {"name": f.pattern_name, "count": f.count, "risk": f.risk_score}
+                                for f in findings
+                            ],
+                        }
+                    )
                 except Exception:
-                    results.append({
-                        "path": str(filepath.relative_to(dir_path)),
-                        "classification": "error",
-                        "mime_type": "unknown",
-                        "sensitivity": 0,
-                        "sensitive_patterns": [],
-                    })
+                    results.append(
+                        {
+                            "path": str(filepath.relative_to(dir_path)),
+                            "classification": "error",
+                            "mime_type": "unknown",
+                            "sensitivity": 0,
+                            "sensitive_patterns": [],
+                        }
+                    )
             return results, len(list(dir_path.rglob("*")))
 
         results, total_count = await asyncio.to_thread(_scan)

@@ -31,12 +31,13 @@ except ImportError as e:
 TEMP_DIR = Path(".phantom/staging")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
+# llama.cpp — direct local inference endpoint.
+LLAMACPP_URL = os.environ.get("LLAMACPP_URL", "http://localhost:8080").rstrip("/")
+
 # SecureLLM Bridge (M3.4) — all LLM calls route through the bridge in production.
 # Set SECURELLM_BRIDGE_URL to the bridge address; empty string disables routing
 # so direct provider calls are used (local dev without the bridge running).
-SECURELLM_BRIDGE_URL = os.environ.get(
-    "SECURELLM_BRIDGE_URL", "http://localhost:8081"
-).rstrip("/")
+SECURELLM_BRIDGE_URL = os.environ.get("SECURELLM_BRIDGE_URL", "http://localhost:8081").rstrip("/")
 
 # ml-ops-api (M7.4) — local GPU inference via candle/Rust. Tried before the cloud
 # bridge so requests stay on-prem when GPU is available.
@@ -92,9 +93,7 @@ def save_upload_file(upload_file: UploadFile) -> Path:
     try:
         filename = upload_file.filename or "upload"
         suffix = Path(filename).suffix
-        with tempfile.NamedTemporaryFile(
-            delete=False, suffix=suffix, dir=TEMP_DIR
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=TEMP_DIR) as tmp:
             shutil.copyfileobj(upload_file.file, tmp)
             tmp_path = Path(tmp.name)
         return tmp_path
@@ -182,9 +181,7 @@ async def process_document(
 
 
 @app.post("/analyze", response_model=AnalyzeResponse)
-async def analyze_document(
-    background_tasks: BackgroundTasks, file: UploadFile = File(...)
-):
+async def analyze_document(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """
     Analyze a document using SPECTRE (Sentiment & Entities).
     """
@@ -260,13 +257,16 @@ async def judge_bundle(bundle: PhantomGateBundle):
         logger.error(f"Error judging bundle: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # ═══════════════════════════════════════════════════════════════
 # LLM / CHAT ENDPOINTS
 # ═══════════════════════════════════════════════════════════════
 
+
 class ChatMessage(BaseModel):
     role: str
     content: str
+
 
 class ChatRequest(BaseModel):
     message: str
@@ -278,30 +278,41 @@ class ChatRequest(BaseModel):
     temperature: float = 0.7
     max_tokens: int = 1024
 
+
 class ChatResponse(BaseModel):
     message: dict[str, Any]
     conversation_id: str
+
 
 @app.get("/api/validate")
 async def validate_providers():
     """Diagnose connectivity to each LLM provider endpoint."""
     import requests as _req
+
     results = {}
 
-    # Test llamacpp on :8081
+    # Test the configured llama.cpp endpoint.
     try:
-        r = _req.get("http://localhost:8081/health", timeout=3)
+        r = _req.get(f"{LLAMACPP_URL}/health", timeout=3)
         results["tensor_forge"] = {"ok": r.ok, "status": r.status_code, "detail": r.text[:200]}
     except Exception:
         # Try /v1/models as fallback probe
         try:
-            r = _req.get("http://localhost:8081/v1/models", timeout=3)
+            r = _req.get(f"{LLAMACPP_URL}/v1/models", timeout=3)
             results["tensor_forge"] = {"ok": r.ok, "status": r.status_code, "detail": r.text[:200]}
         except Exception as e2:
             results["tensor_forge"] = {"ok": False, "status": None, "detail": str(e2)}
 
-    results["openai"] = {"ok": bool(os.environ.get("OPENAI_API_KEY")), "detail": "key present" if os.environ.get("OPENAI_API_KEY") else "OPENAI_API_KEY not set"}
-    results["anthropic"] = {"ok": bool(os.environ.get("ANTHROPIC_API_KEY")), "detail": "key present" if os.environ.get("ANTHROPIC_API_KEY") else "ANTHROPIC_API_KEY not set"}
+    results["openai"] = {
+        "ok": bool(os.environ.get("OPENAI_API_KEY")),
+        "detail": "key present" if os.environ.get("OPENAI_API_KEY") else "OPENAI_API_KEY not set",
+    }
+    results["anthropic"] = {
+        "ok": bool(os.environ.get("ANTHROPIC_API_KEY")),
+        "detail": "key present"
+        if os.environ.get("ANTHROPIC_API_KEY")
+        else "ANTHROPIC_API_KEY not set",
+    }
 
     return results
 
@@ -311,7 +322,7 @@ async def list_models():
     """List available models per provider."""
     return {
         "tensor_forge": [
-            {"id": "local-llamacpp", "name": "Local LLaMA.cpp (8081)"},
+            {"id": "local-llamacpp", "name": f"Local LLaMA.cpp ({LLAMACPP_URL})"},
             {"id": "qwen3-vl-8b", "name": "Qwen 3 VL"},
         ],
         "openai": [
@@ -323,6 +334,7 @@ async def list_models():
             {"id": "claude-3-sonnet", "name": "Claude 3 Sonnet"},
         ],
     }
+
 
 def _bridge_model_id(provider: str, model: str | None) -> str:
     """Map cortex provider names to securellm-bridge {provider}/{model} identifiers."""
@@ -339,7 +351,9 @@ def _bridge_model_id(provider: str, model: str | None) -> str:
     return f"{provider}/{model}" if model else provider
 
 
-def _call_via_bridge(provider: str, model: str | None, messages: list, temperature: float, max_tokens: int) -> str:
+def _call_via_bridge(
+    provider: str, model: str | None, messages: list, temperature: float, max_tokens: int
+) -> str:
     """
     Route an LLM request through securellm-bridge.
 
@@ -401,7 +415,9 @@ def _call_via_ml_ops(model: str | None, messages: list, temperature: float, max_
     return res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
 
 
-def _call_direct(provider: str, model: str | None, messages: list, temperature: float, max_tokens: int) -> str:
+def _call_direct(
+    provider: str, model: str | None, messages: list, temperature: float, max_tokens: int
+) -> str:
     """
     Direct provider calls — fallback for local dev when securellm-bridge is not running.
     Not used in production (bridge is always available in Docker compose).
@@ -414,33 +430,58 @@ def _call_direct(provider: str, model: str | None, messages: list, temperature: 
             "temperature": temperature,
             "max_tokens": max_tokens,
         }
-        res = _requests.post("http://localhost:8081/v1/chat/completions", json=payload, timeout=120)
+        res = _requests.post(f"{LLAMACPP_URL}/v1/chat/completions", json=payload, timeout=120)
         if res.ok:
             return res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         # Native llama.cpp /completion fallback
-        prompt = "".join(f"{m['role'].capitalize()}: {m['content']}\n" for m in messages) + "Assistant: "
-        fallback = {"prompt": prompt, "n_predict": max_tokens, "temperature": temperature, "stop": ["\nUser:", "\nHuman:"]}
-        res2 = _requests.post("http://localhost:8081/completion", json=fallback, timeout=120)
+        prompt = (
+            "".join(f"{m['role'].capitalize()}: {m['content']}\n" for m in messages) + "Assistant: "
+        )
+        fallback = {
+            "prompt": prompt,
+            "n_predict": max_tokens,
+            "temperature": temperature,
+            "stop": ["\nUser:", "\nHuman:"],
+        }
+        res2 = _requests.post(f"{LLAMACPP_URL}/completion", json=fallback, timeout=120)
         if res2.ok:
             return res2.json().get("content", "").strip()
         raise Exception(f"Tensor Forge API Error ({res2.status_code}): {res2.text}")
 
     if provider == "openai":
         headers = {"Authorization": f"Bearer {os.environ.get('OPENAI_API_KEY', '')}"}
-        payload = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
-        res = _requests.post("https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=60)
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+        }
+        res = _requests.post(
+            "https://api.openai.com/v1/chat/completions", json=payload, headers=headers, timeout=60
+        )
         if res.ok:
             return res.json().get("choices", [{}])[0].get("message", {}).get("content", "")
         raise Exception(f"OpenAI API Error: {res.text}")
 
     if provider == "anthropic":
-        headers = {"x-api-key": os.environ.get("ANTHROPIC_API_KEY", ""), "anthropic-version": "2023-06-01", "content-type": "application/json"}
+        headers = {
+            "x-api-key": os.environ.get("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+        }
         system_msg = "; ".join(m["content"] for m in messages if m["role"] == "system")
         anthropic_msgs = [m for m in messages if m["role"] != "system"]
-        payload = {"model": model, "max_tokens": max_tokens, "temperature": temperature, "messages": anthropic_msgs}
+        payload = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "messages": anthropic_msgs,
+        }
         if system_msg:
             payload["system"] = system_msg
-        res = _requests.post("https://api.anthropic.com/v1/messages", json=payload, headers=headers, timeout=60)
+        res = _requests.post(
+            "https://api.anthropic.com/v1/messages", json=payload, headers=headers, timeout=60
+        )
         if res.ok:
             return res.json().get("content", [{}])[0].get("text", "")
         raise Exception(f"Anthropic API Error: {res.text}")
@@ -498,7 +539,9 @@ async def api_chat(request: ChatRequest):
                     f"securellm-bridge unreachable at {SECURELLM_BRIDGE_URL} — falling back to direct call"
                 )
             except Exception as bridge_err:
-                logger.warning(f"securellm-bridge error: {bridge_err} — falling back to direct call")
+                logger.warning(
+                    f"securellm-bridge error: {bridge_err} — falling back to direct call"
+                )
 
         # Tier 3: direct provider calls (dev fallback)
         if not content:
@@ -517,6 +560,7 @@ async def api_chat(request: ChatRequest):
         message={"content": content, "sources": []},
         conversation_id=request.conversation_id,
     )
+
 
 if __name__ == "__main__":
     import uuid

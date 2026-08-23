@@ -64,9 +64,7 @@ class AIConfig:
 
     # Cloud providers
     enable_fallback: bool = True
-    fallback_order: list[str] = field(
-        default_factory=lambda: ["deepseek", "openai", "anthropic"]
-    )
+    fallback_order: list[str] = field(default_factory=lambda: ["deepseek", "openai", "anthropic"])
 
     # Generation parameters
     max_tokens: int = 2048
@@ -110,7 +108,7 @@ class AIProvider(ABC):
 class LlamaCppProvider(AIProvider):
     """Local LlamaCpp server provider."""
 
-    def __init__(self, base_url: str = "http://localhost:8081", timeout: int = 120):
+    def __init__(self, base_url: str = "http://localhost:8080", timeout: int = 120):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self._available: bool | None = None
@@ -151,9 +149,7 @@ class LlamaCppProvider(AIProvider):
         try:
             if HTTPX_AVAILABLE:
                 async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    response = await client.post(
-                        f"{self.base_url}/completion", json=payload
-                    )
+                    response = await client.post(f"{self.base_url}/completion", json=payload)
                     if response.status_code == 200:
                         data = response.json()
                         return data.get("content", "")
@@ -429,9 +425,7 @@ class AIAnalyzer:
                         logger.info(f"Generated response using {provider_name}")
                         return response
                 except Exception as e:
-                    logger.warning(
-                        f"Provider {provider_name} attempt {attempt + 1} failed: {e}"
-                    )
+                    logger.warning(f"Provider {provider_name} attempt {attempt + 1} failed: {e}")
                     if attempt < self.config.max_retries - 1:
                         await asyncio.sleep(self.config.retry_delay)
 
@@ -529,9 +523,7 @@ TOP_RECOMMENDATIONS:
 3. (recommendation 3)
 """
 
-    def _parse_analysis_response(
-        self, response: str, metrics: ProjectMetrics
-    ) -> AIInsights:
+    def _parse_analysis_response(self, response: str, metrics: ProjectMetrics) -> AIInsights:
         """Parse AI response into structured insights."""
         insights = AIInsights()
 
@@ -574,9 +566,7 @@ TOP_RECOMMENDATIONS:
                 elif line[0].isdigit() and "." in line:
                     # Numbered recommendation
                     if current_section == "recommendations":
-                        rec_text = (
-                            line.split(".", 1)[1].strip() if "." in line else line
-                        )
+                        rec_text = line.split(".", 1)[1].strip() if "." in line else line
                         insights.suggestions.append(
                             ImprovementSuggestion(
                                 title=rec_text[:50],
@@ -598,9 +588,7 @@ TOP_RECOMMENDATIONS:
 
         except Exception as e:
             logger.error(f"Error parsing AI response: {e}")
-            insights.summary = (
-                f"Analysis generated but parsing failed: {response[:200]}..."
-            )
+            insights.summary = f"Analysis generated but parsing failed: {response[:200]}..."
 
         return insights
 
@@ -630,9 +618,7 @@ Provide a brief, actionable assessment focusing on the most critical issues.
         response = await self.generate(prompt)
         return response or "Technical debt assessment unavailable"
 
-    async def suggest_improvements(
-        self, metrics: ProjectMetrics
-    ) -> list[ImprovementSuggestion]:
+    async def suggest_improvements(self, metrics: ProjectMetrics) -> list[ImprovementSuggestion]:
         """
         Generate prioritized improvement suggestions.
 
@@ -700,9 +686,7 @@ Format as:
                                 ImprovementSuggestion(
                                     title=title.strip(),
                                     description=desc.strip(),
-                                    priority=priority_map.get(
-                                        priority, RiskLevel.MEDIUM
-                                    ),
+                                    priority=priority_map.get(priority, RiskLevel.MEDIUM),
                                     effort_estimate=effort,
                                 )
                             )
@@ -752,9 +736,7 @@ async def check_providers() -> dict[str, bool]:
         Dictionary of provider name to availability
     """
     analyzer = AIAnalyzer()
-    return {
-        name: provider.is_available() for name, provider in analyzer._providers.items()
-    }
+    return {name: provider.is_available() for name, provider in analyzer._providers.items()}
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -773,10 +755,8 @@ if __name__ == "__main__":
         if not providers:
             print("❌ No AI providers available!")
             print("\nTo enable providers:")
-            print("  - Local: Start LlamaCpp server on http://localhost:8081")
-            print(
-                "  - Cloud: Set DEEPSEEK_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY"
-            )
+            print("  - Local: Start LlamaCpp server on http://localhost:8080")
+            print("  - Cloud: Set DEEPSEEK_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY")
             return
 
         print("Available providers:")
@@ -785,9 +765,7 @@ if __name__ == "__main__":
 
         # Quick test
         print("\nTesting generation...")
-        response = await analyzer.generate(
-            "Say 'Hello from ProjectPhantom!' in one line."
-        )
+        response = await analyzer.generate("Say 'Hello from ProjectPhantom!' in one line.")
         if response:
             print(f"✅ Response: {response[:100]}")
         else:
