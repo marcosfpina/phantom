@@ -89,7 +89,7 @@ dev = [
     "pip-audit>=2.6,<3.0",
 ]
 gpu = [
-    "torch>=2.0",
+    "torch>=2.13.0",
     "faiss-gpu>=1.7",
 ]
 all = [
