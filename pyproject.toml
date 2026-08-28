@@ -36,7 +36,7 @@ dependencies = [
     # Core
     "pydantic>=2.0,<3.0",
     "rich>=13.0,<14.0",
-    "typer>=0.9,<1.0",
+    "typer>=0.27.0,<1.0",
 
     # Data processing
     "numpy>=1.24,<2.0",
