@@ -184,6 +184,10 @@
           pv
           parallel
           just
+
+          # Documentation
+          doxygen
+          graphviz
         ];
 
         # ═══════════════════════════════════════════════════════════════
