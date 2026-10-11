@@ -1,6 +1,6 @@
-{
+              {
   description = "🔮 PHANTOM v2.0 - Enhanced with Crane & CI/CD Checks";
-
+q
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";

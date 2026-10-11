@@ -1,20 +1,20 @@
 {
   lib,
-  python313Packages,
+  python314Packages,
   fetchFromGitHub,
 }:
-python313Packages.buildPythonApplication rec {
+python314Packages.buildPythonApplication rec {
   pname = "phantom";
   version = "0.1.0";
   format = "pyproject";
 
   src = ../.;
 
-  nativeBuildInputs = with python313Packages; [
+  nativeBuildInputs = with python314Packages; [
     hatchling
   ];
 
-  propagatedBuildInputs = with python313Packages; [
+  propagatedBuildInputs = with python314Packages; [
     # Core
     pydantic
     rich
@@ -53,9 +53,9 @@ python313Packages.buildPythonApplication rec {
 
   meta = with lib; {
     description = "AI-Powered Document Intelligence & Classification Pipeline";
-    homepage = "https://github.com/VoidNxSEC/phantom";
+    homepage = "https://github.com/marcosfpina/phantom";
     license = licenses.asl20;
-    maintainers = [];
+    maintainers = [ marcosfpina ];
     mainProgram = "phantom";
   };
 }

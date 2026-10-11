@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
 authors = [
-    { name = "voidnxlabs", email = "dev@voidnxlabs.io" }
+    { name = "marcosfpina", email = "sec@voidnxlabs.com" }
 ]
 keywords = [
     "ai",
@@ -29,6 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
@@ -102,9 +103,9 @@ phantom = "phantom.cli.main:app"
 phantom-api = "phantom.api.app:serve"
 
 [project.urls]
-Homepage = "https://github.com/kernelcore/phantom"
-Documentation = "https://github.com/kernelcore/phantom/docs"
-Repository = "https://github.com/kernelcore/phantom"
+Homepage = "https://github.com/marcosfpina/phantom"
+Documentation = "https://github.com/marcosfpina/phantom/docs"
+Repository = "https://github.com/marcosfpina/phantom"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/phantom"]
@@ -153,7 +154,7 @@ select = [
 known-first-party = ["phantom"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.14"
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = false

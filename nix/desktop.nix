@@ -7,10 +7,10 @@
   wrapGAppsHook4,
   gobject-introspection,
 }:
-python313Packages.buildPythonApplication rec {
+python314Packages.buildPythonApplication rec {
   pname = "phantom-desktop";
   version = "0.1.0";
-  format = "other"; # Not a standard Python package
+  format = "other";
 
   src = ./..;
 
@@ -24,7 +24,7 @@ python313Packages.buildPythonApplication rec {
     libadwaita
   ];
 
-  propagatedBuildInputs = with python313Packages; [
+  propagatedBuildInputs = with python314Packages; [
     pygobject3
     pycairo
     pydantic
@@ -65,9 +65,9 @@ python313Packages.buildPythonApplication rec {
 
   meta = with lib; {
     description = "Phantom Desktop - Native GTK4 Document Intelligence";
-    homepage = "https://github.com/VoidNxSEC/phantom";
+    homepage = "https://github.com/marcosfpina/phantom";
     license = licenses.asl20;
-    maintainers = [];
+    maintainers = [ marcosfpina ];
     mainProgram = "phantom-desktop";
     platforms = platforms.linux;
   };

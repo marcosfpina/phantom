@@ -58,7 +58,7 @@
         # ═══════════════════════════════════════════════════════════════
         # PYTHON ENVIRONMENT
         # ═══════════════════════════════════════════════════════════════
-        pythonEnv = pkgs.python313.withPackages (
+        pythonEnv = pkgs.python314.withPackages (
           ps:
             with ps; [
               # Core Data Processing
@@ -479,7 +479,7 @@
             ║  ██╔═══╝ ██╔══██║██╔══██║██║╚██╗██║   ██║   ██║   ██║██║╚██╔╝██║ ║
             ║  ██║     ██║  ██║██║  ██║██║ ╚████║   ██║   ╚██████╔╝██║ ╚═╝ ██║ ║
             ║  ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝ ║
-            ║  v0.1.0 - SOVEREIGN MONOREPO | LOCAL-FIRST AI                    ║
+            ║  v0.1.0 - Secret Scanner | Privacy Tooling | DAG Classificator   ║
             ╚══════════════════════════════════════════════════════════════════╝
             BANNER
             echo -e "\033[0m"
